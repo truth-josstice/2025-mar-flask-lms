@@ -13,8 +13,6 @@ def get_students():
     data = students_schema.dump(students_list) # JavaScript JSON object
     
     if data:
-        python_object = [student for student in students_list]
-        print(python_object)
         return jsonify(data)
     else:
         return jsonify({"message": "No student records found."}), 404
@@ -51,8 +49,8 @@ def create_student():
 
 
 # PUT/PATCH /id
-@students_bp.route('/<int:student_id>', methods=["PUT", "PATCH"])
-def update_student(student_id):
-    body_date = request.get_json()
+# @students_bp.route('/<int:student_id>', methods=["PUT", "PATCH"])
+# def update_student(student_id):
+#     body_date = request.get_json()
 
 # DELETE /id
