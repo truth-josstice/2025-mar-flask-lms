@@ -53,15 +53,29 @@ def create_student():
     except IntegrityError as err:
         match err.orig.pgcode:
             case errorcodes.NOT_NULL_VIOLATION:
-                return {"message": f"Required field {err.orig.diag.column_name} cannot be null."}, 400
+                return jsonify({"message": f"Required field {err.orig.diag.column_name} cannot be null."}), 400
             case errorcodes.UNIQUE_VIOLATION:
-                return {"message": f"Email must be unique."}, 400
+                return jsonify({"message": f"Email must be unique."}), 400
 
 
 # PUT/PATCH /id
-# @students_bp.route('/<int:student_id>', methods=["PUT", "PATCH"])
-# def update_student(student_id):
-#     body_date = request.get_json()
+@students_bp.route('/<int:student_id>', methods=["PUT", "PATCH"])
+def update_student(student_id):
+    stmt = db.select(Student).where(Student.id==student_id)
+    student=db.session.scalar(stmt)
+
+    if student:
+        body_data = request.get_json()
+
+        student.name = body_data.get("name", student.name)
+        student.address = body_data.get("address", student.address)
+        student.email = body_data.get("email", student.address)
+
+        db.session.commit()
+        return jsonify(student_schema.dump(student))
+    
+    else: 
+        return jsonify({"message": f"Student with id {student_id} does not exist."}), 404
 
 # DELETE /id
 @students_bp.route('/<int:student_id>', methods=["DELETE"])
@@ -73,6 +87,6 @@ def delete_student(student_id):
     if student:
         db.session.delete(student)
         db.session.commit()
-        return {"message": f"Student '{student.name}' was removed successfully."},201
+        return jsonify({"message": f"Student '{student.name}' was removed successfully."}),201
     else:
-        return {"message": f"Student with id '{student_id}' does not exist."}, 404
+        return jsonify({"message": f"Student with id '{student_id}' does not exist."}), 404
