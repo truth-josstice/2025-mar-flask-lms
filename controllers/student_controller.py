@@ -1,4 +1,6 @@
 from flask import Blueprint, jsonify, request
+from sqlalchemy.exc import IntegrityError
+from psycopg2 import errorcodes
 from init import db
 from models.students import Student, student_schema, students_schema
 
@@ -20,7 +22,7 @@ def get_students():
 
 # GET /id
 @students_bp.route('/<int:student_id>')
-def get_student(student_id):
+def get_student_by_id(student_id):
     stmt = db.select(Student).where(Student.id==student_id)
     student = db.session.scalar(stmt)
     
@@ -34,18 +36,26 @@ def get_student(student_id):
 # POST /
 @students_bp.route('/', methods=["POST"])
 def create_student():
-    body_data = request.get_json()
+    try:
+        body_data = request.get_json()
 
-    new_student = Student(
-        name=body_data.get("name"),
-        email=body_data.get("email"),
-        address=body_data.get("address")
-    )
+        new_student = Student(
+            name=body_data.get("name"),
+            email=body_data.get("email"),
+            address=body_data.get("address")
+        )
 
-    db.session.add(new_student)
-    db.session.commit()
+        db.session.add(new_student)
+        db.session.commit()
 
-    return jsonify(student_schema.dump(new_student)), 201
+        return jsonify(student_schema.dump(new_student)), 201
+    
+    except IntegrityError as err:
+        match err.orig.pgcode:
+            case errorcodes.NOT_NULL_VIOLATION:
+                return {"message": f"Required field {err.orig.diag.column_name} cannot be null."}, 400
+            case errorcodes.UNIQUE_VIOLATION:
+                return {"message": f"Email must be unique."}, 400
 
 
 # PUT/PATCH /id
