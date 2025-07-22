@@ -64,3 +64,15 @@ def create_student():
 #     body_date = request.get_json()
 
 # DELETE /id
+@students_bp.route('/<int:student_id>', methods=["DELETE"])
+def delete_student(student_id):
+    stmt = db.select(Student).where(Student.id==student_id)
+    student = db.session.scalar(stmt)
+
+    # data = student_schema.dump(student)
+    if student:
+        db.session.delete(student)
+        db.session.commit()
+        return {"message": f"Student '{student.name}' was removed successfully."},201
+    else:
+        return {"message": f"Student with id '{student_id}' does not exist."}, 404
