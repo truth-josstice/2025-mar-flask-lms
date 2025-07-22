@@ -69,7 +69,7 @@ def update_student(student_id):
 
         student.name = body_data.get("name", student.name)
         student.address = body_data.get("address", student.address)
-        student.email = body_data.get("email", student.address)
+        student.email = body_data.get("email", student.email)
 
         db.session.commit()
         return jsonify(student_schema.dump(student))
